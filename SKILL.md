@@ -191,7 +191,7 @@
 
 **角色**：将最终确定的内容转化为平台 API 调用。
 
-通过 RPA/API 集成处理任务创建、素材上传和调度。所有参数都是确定性的——AI 的工作在内容生成阶段已结束。
+通过自动化 API 集成处理任务创建、素材上传和调度。所有参数都是确定性的——AI 的工作在内容生成阶段已结束。
 
 ---
 
@@ -473,7 +473,7 @@ This is pure code — no AI involved. Business rules (which channel sends on whi
 
 **Role**: Translate finalized content into platform API calls.
 
-Handles task creation, material upload, and scheduling through RPA/API integration. All parameters are deterministic — AI's job ended at content generation.
+Handles task creation, material upload, and scheduling through automation API integration. All parameters are deterministic — AI's job ended at content generation.
 
 ---
 

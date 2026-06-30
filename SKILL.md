@@ -65,13 +65,13 @@ python generate_all.py --start MMDD --days N [--format-prompt "..."]
 
 **Template Structure:**
 ```
-{theme_emoji} 0.1元小课包上新｜{AI_generated_title}
+{theme_emoji} {price}小课包上新｜{AI_generated_title}
 {link_1}
 ✨ {selling_point_1}  (10-14 chars)
 🎯 {selling_point_2}  (10-14 chars)
 🎬 {selling_point_3}  (10-14 chars)
 
-🧧另享40+主题，400集3D动画，59元拥有：
+🧧{upsell_text}
 {link_2}
 ```
 
@@ -92,7 +92,7 @@ python generate_all.py --start MMDD --days N [--format-prompt "..."]
 📚【{category}】百科科普课堂
 {opening}{AI_knowledge_point}
 
-斑马百科会员首月仅需5️⃣9️⃣元
+{brand}会员首月仅需5️⃣9️⃣元
 {link}
 🌟{guide_text}
 ```
@@ -159,8 +159,8 @@ node generate.js -t qunfa -s 0701 -d 7 -n 3
 **Specifications:**
 - Dimensions: 2600×2080
 - Style: Characters in diverse daily scenes (30 scene pool)
-- Fixed text elements: "新人首月59元", "连续包月首月直降50元", "点我开通"
-- Output: `output/qunfa/{MMDD}/59元小程序{MMDD}_{index}.jpg`
+- Fixed text elements: "{promo_text_1}", "{promo_text_2}", "{cta_button}"
+- Output: `output/qunfa/{MMDD}/{product_card}{MMDD}_{index}.jpg`
 
 ### Member Moments Images / 会员朋友圈图
 
@@ -216,7 +216,7 @@ node api/配置推送.js START_DATE END_DATE [OPTIONS]
 **Folders:**
 | Folder | Content | Naming Pattern |
 |--------|---------|----------------|
-| 群发 | Member broadcast cards | `59元小程序-{MMDD}.jpg` |
+| 群发 | Member broadcast cards | `{product_card}-{MMDD}.jpg` |
 | 朋友圈 | Member moments images | `{MMDD}朋友圈.jpg` |
 | 私信 | Member DM cards | Same as 群发 |
 | 小课包 | Mini-course broadcast cards | `{theme}-{MMDD}.png` |

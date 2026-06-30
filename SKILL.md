@@ -1,337 +1,401 @@
-# Private Domain Operations Skill / 私域推送运营技能
+# Private Domain AI Skill: Methodology Guide
 
-## Overview / 概述
-
-This skill manages an end-to-end private domain content pipeline covering:
-1. **Content Generation** — AI-generated promotional copy (text)
-2. **Image Generation** — AI-generated promotional images
-3. **Deployment** — Automated task configuration across multiple channels
-
-本技能管理端到端的私域内容流水线：
-1. **文案生成** — AI 生成推广文案
-2. **图片生成** — AI 生成推广图片
-3. **任务配置** — 自动化多渠道推送配置
+# 私域 AI 技能：方法论指南
 
 ---
 
-## Pipeline Overview / 流水线总览
+## 1. Prompt Engineering Patterns / 提示词工程模式
+
+### 1.1 Prompt Architecture / 提示词架构
+
+Every effective prompt follows a layered structure:
+
+每条有效提示词遵循分层结构：
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    FULL DEPLOYMENT PIPELINE                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  Phase 1: Content Generation (Python)                            │
-│  ├─ Mini-course copy (14 themes × 3 channels)                   │
-│  ├─ Member copy (11 categories × 3 channels)                    │
-│  └─ Write to cloud spreadsheet                                   │
-│                                                                   │
-│  Phase 2: Image Generation (Node.js) [Parallel]                 │
-│  ├─ Mini-course broadcast images (theme-specific)                │
-│  ├─ Member broadcast images (scene-based)                        │
-│  └─ Member moments images (composite)                            │
-│                                                                   │
-│  Phase 3: Task Deployment (Node.js)                              │
-│  ├─ Update material library                                      │
-│  ├─ Create broadcast tasks (daily)                               │
-│  ├─ Create moments tasks (daily)                                 │
-│  ├─ Create DM tasks (specific days only)                         │
-│  └─ Send notification                                            │
-│                                                                   │
-└─────────────────────────────────────────────────────────────────┘
+Layer 1: Role Definition (角色定义)
+Layer 2: Constraints (约束条件)
+Layer 3: Output Format (输出格式)
+Layer 4: Examples or References (示例/参考)
 ```
+
+**Role Definition / 角色定义**
+
+Begin with a precise professional identity. Don't just say "you are an AI assistant" — define domain expertise and tone.
+
+用精确的专业身份开头。不要只说"你是AI助手"——要定义领域专长和语气。
+
+```
+Pattern:  "你是一个专业的{domain}专家，擅长{specific_skill}。"
+Example:  "你是一个专业的营销文案撰写专家，擅长为儿童教育产品撰写吸引人的推广文案。"
+```
+
+Why this works: LLMs respond to role-framing by activating relevant knowledge clusters. A "marketing copywriter for children's education" produces different output than a generic "helpful assistant."
+
+为什么有效：LLM 对角色框架的响应会激活相关知识簇。"儿童教育营销文案专家"产出的内容与通用"助手"截然不同。
+
+**Constraints / 约束条件**
+
+Constraints are the most powerful lever. Be numerical and verifiable:
+
+约束是最强大的杠杆。要数值化、可验证：
+
+- Character counts: "每个卖点10-14个字" (each selling point 10-14 characters)
+- Line counts: "必须恰好3行" (must be exactly 3 lines)
+- Content rules: "不要出现价格信息" (no pricing information)
+- Structural rules: "第一行是主题引入，第二行是核心卖点，第三行是行动号召" (line 1 = theme intro, line 2 = core selling point, line 3 = CTA)
+
+Why numerical constraints: Vague instructions ("keep it short") produce inconsistent results. Exact numbers ("10-14 characters") create a verifiable contract between prompt and output.
+
+为什么要数值化约束：模糊指令（"简短一些"）产出不稳定。精确数字（"10-14个字"）在提示词和输出之间建立可验证的契约。
+
+**Output Format / 输出格式**
+
+Define format with markers that code can parse:
+
+用代码可解析的标记定义格式：
+
+```
+For creative content:   Use section markers (===群发===, ===朋友圈===)
+For validation:         Use strict JSON ({"pass": true/false, "reason": "..."})
+For structured data:    Use numbered lists with fixed prefixes
+```
+
+Why parseable formats: AI output must flow into downstream code. If your pipeline needs to extract "the broadcast copy" from a generation, the model must produce it in a predictable, machine-parseable structure.
+
+为什么要可解析格式：AI 输出必须流入下游代码。如果流水线需要提取"群发文案"，模型必须以可预测、可机器解析的结构产出。
+
+### 1.2 Temperature Strategy / 温度策略
+
+Temperature is not one-size-fits-all. Match it to the task's nature:
+
+温度不是万能的。要匹配任务性质：
+
+| Task Type / 任务类型 | Temperature | Rationale / 理由 |
+|---|---|---|
+| Creative generation / 创意生成 | 0.8–0.9 | Maximize diversity, avoid repetitive patterns / 最大化多样性，避免重复模式 |
+| Fact validation / 事实验证 | 0.1 | Deterministic yes/no judgment, no creativity needed / 确定性判断，不需要创意 |
+| Format adjustment / 格式调整 | 0.3 | Preserve meaning while restructuring, slight flexibility / 保持语义同时重组，轻微灵活性 |
+
+**Key insight / 关键洞察**: When the same content passes through multiple AI stages (generate → validate → adjust), each stage should have its own temperature. The creative stage needs high temperature for variety; the validation stage needs near-zero for reliability.
+
+当同一内容经过多个 AI 阶段（生成 → 验证 → 调整）时，每个阶段应有独立温度。创意阶段需要高温保证多样性；验证阶段需要低温保证可靠性。
+
+### 1.3 Prompt Anchoring / 提示词锚定
+
+For image generation, use priority markers to control which instructions the model follows most strictly:
+
+图片生成中，用优先级标记控制模型严格遵循哪些指令：
+
+```
+【最高优先级】文字元素必须精准呈现，不允许任何文字错误
+【次高优先级】整体构图和色彩方案
+【一般优先级】背景细节和装饰元素
+```
+
+Why priority markers: Image models have limited "attention budget." Without explicit priority, they may render a beautiful background but misspell the text. Priority markers tell the model where to spend its accuracy budget.
+
+为什么要优先级标记：图像模型的"注意力预算"有限。没有明确优先级，可能渲染了精美背景却拼错文字。优先级标记告诉模型在哪里投入精确度。
+
+### 1.4 Reference-Based Generation / 基于参考的生成
+
+Instead of describing an image from scratch, provide a reference image + modification instructions:
+
+不要从零描述图片，而是提供参考图 + 修改指令：
+
+```
+Structure:
+  reference_image: [base image URL/path]
+  prompt: "Based on the reference, change {element_A} to {element_B}, keep {element_C} unchanged"
+```
+
+Why reference-based: Pure text-to-image has high variance. A reference image anchors the composition, style, and layout — the AI only needs to modify specific elements, dramatically reducing unwanted variation.
+
+为什么基于参考：纯文生图方差大。参考图锚定构图、风格和布局——AI只需修改特定元素，大幅减少不可控变化。
 
 ---
 
-## Phase 1: Content Generation / 文案生成
+## 2. Workflow Design / 工作流设计
 
-### Master Command / 主命令
+### 2.1 Pipeline Architecture / 流水线架构
 
-```bash
-python generate_all.py --start MMDD --days N [--format-prompt "..."]
+```
+[Generation] → [Validation] → [Deduplication] → [Formatting] → [Deployment]
+     AI             AI            Code              AI/Code          Code
 ```
 
-### Products / 产品线
+**Why this order matters / 为什么顺序重要**:
 
-| Product | Channels | Schedule | AI Model |
-|---------|----------|----------|----------|
-| Mini-course (小课包) | Broadcast, Moments, DM | Daily / DM=Saturday only | glm-4-flash |
-| Member (会员) | Broadcast, Moments, DM | Daily / DM=Tuesday only | glm-4-flash |
+1. **Generation first**: Create content freely without constraints on uniqueness or formatting
+2. **Validation second**: Catch factual errors before they propagate further
+3. **Deduplication third**: Remove similar content against historical corpus (code-based, deterministic)
+4. **Formatting fourth**: Adapt surviving content to channel-specific requirements
+5. **Deployment last**: Push finalized content through deterministic scheduling
 
-### Mini-Course Content Rules / 小课包文案规则
+1. **先生成**：自由创作，不受唯一性或格式约束
+2. **再验证**：在错误进一步传播前捕获事实错误
+3. **再去重**：与历史语料库比对去除相似内容（基于代码，确定性）
+4. **再格式化**：将幸存内容适配为渠道特定要求
+5. **最后部署**：通过确定性调度推送最终内容
 
-**Theme Rotation (14 themes cycling):**
-蘑菇 → 火星 → 月球 → 钟表 → 建筑里的神兽 → 有毒生物 → 伪装大师 → 非洲动物 → 故宫 → 敦煌 → 钱币 → 四大发明 → 极地动物 → 长江黄河
+### 2.2 Why Separate Validation from Generation / 为什么验证与生成分离
 
-**Template Structure:**
-```
-{theme_emoji} {price}小课包上新｜{AI_generated_title}
-{link_1}
-✨ {selling_point_1}  (10-14 chars)
-🎯 {selling_point_2}  (10-14 chars)
-🎬 {selling_point_3}  (10-14 chars)
+A single prompt saying "generate accurate marketing copy" is unreliable. Instead:
 
-🧧{upsell_text}
-{link_2}
-```
+单一提示词说"生成准确的营销文案"不可靠。替代方案：
 
-**Generation Rules:**
-- Title: 8-14 characters, theme-specific, no generic phrases
-- Selling points: Based on real course content (THEME_MATERIALS), fact-checked
-- Emoji prefixes: Random unique selection from ✨🎯🎬📚🌟🔬💡🎪
-- Optional decoration frame (30% probability, reduces to 2 selling points)
-- Deduplication against historical titles and selling points
+- **Generator (Model A, high temperature)**: Optimizes for creativity and engagement
+- **Validator (Model B or same model, low temperature)**: Optimizes for accuracy against a fact database
 
-### Member Content Rules / 会员文案规则
+- **生成器（模型A，高温）**：针对创意和吸引力优化
+- **验证器（模型B或同模型，低温）**：针对事实数据库的准确性优化
 
-**Category Rotation (11 categories):**
-生物 → 天文 → 物理 → 化学 → 数学 → 人体 → 历史 → 文学 → 地理 → 科技 → 建筑
+This is the "generator-critic" pattern. The generator doesn't need to self-censor for accuracy (which reduces creativity). The validator doesn't need to be creative (which reduces reliability).
 
-**Template Structure:**
-```
-📚【{category}】百科科普课堂
-{opening}{AI_knowledge_point}
+这是"生成器-评论家"模式。生成器不需要为准确性自我审查（这会降低创意）。验证器不需要有创意（这会降低可靠性）。
 
-{brand}会员首月仅需5️⃣9️⃣元
-{link}
-🌟{guide_text}
+**Validation output must be structured**:
+```json
+{"pass": true, "reason": "selling points match verified material database"}
+{"pass": false, "reason": "mentioned feature X which does not exist in this theme"}
 ```
 
-**Generation Rules:**
-- Knowledge point: ~34 characters, 2-3 sentences
-- Opening phrases: Random from [你知道吗？/ 你注意过吗？/ 你发现了吗？/ 有个秘密，/ 涨知识啦！]
-- Guide texts: Random from [带孩子探索更多奥秘 / 陪孩子发现世界的精彩 / ...]
-- Semantic deduplication (50% similarity threshold)
-- Fact-checked by LLM (glm-4-plus)
+Why JSON for validation: Binary pass/fail with a reason string enables automated retry logic. If validation fails, the system can automatically regenerate (with the failure reason as additional context) without human intervention.
 
-### Output / 输出
+为什么验证用JSON：二元通过/失败加原因字符串支持自动重试逻辑。验证失败时，系统可自动重新生成（以失败原因作为额外上下文），无需人工干预。
 
-- Excel files (versioned, per product)
-- Cloud spreadsheet (Shimo) columns:
-  - A: Date (MM-DD format)
-  - B: Weekday
-  - C: Member DM (Tuesday only)
-  - D: Member Broadcast
-  - E: Member Moments
-  - F: Mini-course DM (Saturday only)
-  - G: Mini-course Broadcast
-  - H: Mini-course Moments
+### 2.3 Deduplication: Code, Not AI / 去重：用代码，不用AI
+
+Deduplication uses `difflib.SequenceMatcher` with a 50% similarity threshold — NOT an AI call.
+
+去重使用 `difflib.SequenceMatcher` 配合 50% 相似度阈值——而非 AI 调用。
+
+**Why code-based dedup / 为什么用代码去重**:
+- Deterministic: Same inputs always produce same result (AI would introduce randomness)
+- Fast: Milliseconds vs seconds per comparison
+- Auditable: The threshold is explicit and tunable
+- Cheap: No API cost for comparing against hundreds of historical entries
+
+- 确定性：相同输入永远产出相同结果（AI 会引入随机性）
+- 快速：每次比对毫秒级 vs 秒级
+- 可审计：阈值是明确且可调的
+- 低成本：与数百条历史记录比对无 API 费用
+
+**Threshold choice (50%)**: Too low (30%) lets near-duplicates through. Too high (70%) rejects content that merely shares common phrases. 50% catches structural repetition while allowing topical similarity.
+
+阈值选择（50%）：太低（30%）让准重复内容通过。太高（70%）拒绝仅共享常见短语的内容。50% 捕获结构性重复同时允许主题相似性。
+
+### 2.4 Format Adjustment as a Separate Stage / 格式调整作为独立阶段
+
+After generation, content may need channel-specific formatting (adding links, adjusting length, inserting emojis). This is a separate AI call because:
+
+生成后，内容可能需要渠道特定格式化（添加链接、调整长度、插入表情）。这是独立的 AI 调用因为：
+
+1. The generator shouldn't worry about final formatting (separation of concerns)
+2. Format rules change independently of content rules
+3. Format adjustment can be validated (e.g., regex-check that links survived the reformatting)
+
+1. 生成器不应担心最终格式（关注点分离）
+2. 格式规则独立于内容规则变化
+3. 格式调整可被验证（如正则检查链接在重新格式化后是否存活）
+
+**Safety net / 安全网**: After format adjustment, validate that critical elements (links, product names) are preserved. If validation fails, fall back to the pre-adjustment version. Never lose data to a formatting pass.
+
+格式调整后，验证关键元素（链接、产品名）是否保留。验证失败则回退到调整前版本。永远不要因为格式化而丢失数据。
+
+### 2.5 Scene Pool Pattern for Image Generation / 图片生成的场景池模式
+
+Instead of asking AI to invent scenes (high variance, often nonsensical):
+
+不要让 AI 发明场景（高方差，常不合理）：
+
+```
+Approach: Maintain a curated pool of 30+ scene descriptions
+           ↓
+         Randomly select one per generation
+           ↓
+         AI renders the fixed text + selected scene
+```
+
+**Why a scene pool / 为什么用场景池**:
+- Quality control: Every scene has been human-reviewed
+- Consistency: Brand-appropriate aesthetics guaranteed
+- Variety: Random selection from a large pool ensures visual diversity
+- Predictability: The AI's creative freedom is bounded to rendering, not conception
+
+- 质量控制：每个场景都经过人工审核
+- 一致性：保证品牌适配的美学
+- 多样性：从大型池随机选择确保视觉多样性
+- 可预测性：AI 的创意自由被限定在渲染而非构思
 
 ---
 
-## Phase 2: Image Generation / 图片生成
+## 3. Component Roles / 组件角色
 
-### Mini-Course Images / 小课包图片
+### 3.1 Content Generation Engine / 内容生成引擎
 
-**Command:**
-```bash
-node batch.js --all -n 5              # All themes, 5 images each
-node batch.js -t 故宫 -t 敦煌 -n 3    # Specific themes
-```
+**Role**: Produce diverse, on-brand promotional text at scale.
 
-**Specifications:**
-- Dimensions: 2600×2080 (5:4 ratio)
-- Model: doubao-seedream-4.5
-- Style: Cartoon characters (boy + monkey) in theme-specific scene
-- Text overlay: Theme title + subtitle (for some themes)
-- Output: `output/{theme_id}/{theme}_v{batch}_{index}.jpg`
+**角色**：大规模产出多样化、符合品牌调性的推广文案。
 
-**Theme Configuration (per theme):**
-```javascript
-{
-  id: "gugong",           // Output folder name
-  name: "故宫",           // Chinese name
-  title: "紫禁城探秘",    // Main title
-  subtitle: "皇宫奥秘·千年传承",  // Subtitle
-  scene: "...",           // Detailed AI scene description
-  overlaySubtitle: true,  // Whether to add text overlay
-  referenceImage: "..."   // Theme-specific reference
-}
-```
+Key design decisions:
+- Theme rotation (14 themes cycling) ensures topic variety without human selection
+- Per-theme material databases provide factual grounding
+- Historical corpus enables automated deduplication
+- Multi-channel output (broadcast, moments, DM) from single generation call
 
-### Member Broadcast Images / 会员群发图
+关键设计决策：
+- 主题轮换（14个主题循环）确保话题多样性无需人工选择
+- 每主题素材数据库提供事实基础
+- 历史语料库支持自动去重
+- 单次生成调用产出多渠道输出（群发、朋友圈、私信）
 
-**Command:**
-```bash
-node generate.js -t qunfa -s 0701 -d 7 -n 3
-```
+### 3.2 Validation Layer / 验证层
 
-**Specifications:**
-- Dimensions: 2600×2080
-- Style: Characters in diverse daily scenes (30 scene pool)
-- Fixed text elements: "{promo_text_1}", "{promo_text_2}", "{cta_button}"
-- Output: `output/qunfa/{MMDD}/{product_card}{MMDD}_{index}.jpg`
+**Role**: Prevent factual errors from reaching end users.
 
-### Member Moments Images / 会员朋友圈图
+**角色**：防止事实错误到达终端用户。
 
-**Two-step process:**
+Design: A second LLM call (or different model) cross-references generated content against verified material databases. This catches hallucinated features, incorrect descriptions, or misattributed content.
 
-**Step 1: Generate background**
-```bash
-node generate.js -t pyq -s 0701 -d 7 -n 3
-```
-- Dimensions: 2048×3072 (2:3 vertical)
-- Pure scenic background with top text only
-- Output: `output/pyq/{MMDD}/{MMDD}朋友圈_{index}.jpg`
+设计：第二次 LLM 调用（或不同模型）将生成内容与验证素材数据库交叉参考。这捕获虚构的功能、不正确的描述或错误归属的内容。
 
-**Step 2: Composite final image**
-```bash
-node compose-pyq.js --dir output/pyq
-```
-- Layers: Background + Monkey film strip + Rights card + QR code
-- Output: `output/pyq/pyq_composed/{MMDD}/`
+### 3.3 Scheduling Engine / 调度引擎
+
+**Role**: Deterministically map content to dates/channels based on business rules.
+
+**角色**：根据业务规则确定性地将内容映射到日期/渠道。
+
+This is pure code — no AI involved. Business rules (which channel sends on which day, what time each group sends) are encoded as configuration, not prompts.
+
+这是纯代码——无 AI 参与。业务规则（哪个渠道哪天发送、每个组什么时间发送）被编码为配置而非提示词。
+
+### 3.4 Deployment Orchestrator / 部署编排器
+
+**Role**: Translate finalized content into platform API calls.
+
+**角色**：将最终确定的内容转化为平台 API 调用。
+
+Handles task creation, material upload, and scheduling through RPA/API integration. All parameters are deterministic — AI's job ended at content generation.
+
+通过 RPA/API 集成处理任务创建、素材上传和调度。所有参数都是确定性的——AI 的工作在内容生成阶段已结束。
 
 ---
 
-## Phase 3: Deployment / 推送配置
+## 4. AI Boundary Definition / AI 边界定义
 
-### Master Command / 主命令
+### 4.1 The Principle / 原则
 
-```bash
-node api/配置推送.js START_DATE END_DATE [OPTIONS]
-```
+**AI handles divergent tasks. Code handles convergent tasks.**
 
-**Options:**
-| Flag | Description |
-|------|-------------|
-| `--generate` | Run content generation first |
-| `--小课包` | Mini-course only |
-| `--会员` | Member only |
-| `--dacu` | Large promotion mode |
-| `--format-prompt "..."` | AI format adjustment |
+**AI 处理发散性任务。代码处理收敛性任务。**
 
-### Task Types Created / 创建的任务类型
+- Divergent: Multiple valid outputs exist (creative writing, image rendering)
+- Convergent: Only one correct output exists (scheduling, date calculation, API calls)
 
-| Task | Channel | Schedule | Time |
-|------|---------|----------|------|
-| Mini-course Broadcast | WeChat Group | Daily | 19:00 |
-| Mini-course Moments | Moments | Daily | 19:00 |
-| Mini-course DM | Private Message | Saturday | 18:00/19:00/20:00 |
-| Member Broadcast | WeChat Group | Daily | 12:00 |
-| Member Moments | Moments | Daily | 12:00 |
-| Member DM | Private Message | Tuesday | 12:00/13:00/14:00 |
+- 发散性：存在多个有效输出（创意写作、图像渲染）
+- 收敛性：只有一个正确输出（调度、日期计算、API调用）
 
-### Material Library / 素材库
+### 4.2 What AI Should Do / AI 应该做什么
 
-**Folders:**
-| Folder | Content | Naming Pattern |
-|--------|---------|----------------|
-| 群发 | Member broadcast cards | `{product_card}-{MMDD}.jpg` |
-| 朋友圈 | Member moments images | `{MMDD}朋友圈.jpg` |
-| 私信 | Member DM cards | Same as 群发 |
-| 小课包 | Mini-course broadcast cards | `{theme}-{MMDD}.png` |
-| 小课包朋友圈 | Mini-course moments | `{theme}·百科朋友圈.jpg` |
+| Task | Why AI | 任务 | 为什么用AI |
+|------|--------|------|------------|
+| Generate promotional copy | Requires creativity, cultural nuance, variety | 生成推广文案 | 需要创意、文化细微差别、多样性 |
+| Validate factual claims | Requires reasoning about semantics | 验证事实声明 | 需要关于语义的推理 |
+| Adjust text formatting | Requires understanding context to restructure | 调整文本格式 | 需要理解上下文来重构 |
+| Render promotional images | Requires visual creativity | 渲染推广图片 | 需要视觉创意 |
 
-**Material Library Notes:**
-- Broadcast/DM tasks use mini-program cards from material library (needs update before task creation)
-- Moments tasks upload images directly (no material library needed)
-- Material library update command: `node 素材库更新-api.js --qunfa/--sixin/--dacu`
+### 4.3 What AI Should NOT Do / AI 不应该做什么
 
-### Deployment Web Panel / 部署面板
+| Task | Why Code | 任务 | 为什么用代码 |
+|------|----------|------|-------------|
+| Schedule which day to send | Deterministic business rule | 安排哪天发送 | 确定性业务规则 |
+| Calculate theme rotation | Simple modular arithmetic | 计算主题轮换 | 简单模运算 |
+| Deduplicate content | Deterministic string comparison is sufficient | 内容去重 | 确定性字符串比对足够 |
+| Upload materials to platforms | API call with fixed parameters | 上传素材到平台 | 固定参数的API调用 |
+| Insert links into copy | Template substitution, must be exact | 在文案中插入链接 | 模板替换，必须精确 |
+| Determine send time | Fixed configuration per channel | 确定发送时间 | 每渠道固定配置 |
 
-A web-based UI (Flask + SocketIO) at `localhost:5006` providing:
-- One-click execution
-- Real-time log streaming
-- Template editing with variable highlighting
-- Material file management
-- Link configuration
-- Scheduled execution
+### 4.4 The Gray Zone: Human Review / 灰色地带：人工审核
 
----
+Some tasks need human judgment that neither AI nor code can fully replace:
 
-## Key Configuration / 关键配置
+有些任务需要人工判断，AI 和代码都不能完全替代：
 
-### Environment Variables / 环境变量
+| Task | Why Human | 任务 | 为什么需要人工 |
+|------|-----------|------|---------------|
+| Approve generated content before deployment | Brand risk, edge cases AI can't judge | 部署前审批生成内容 | 品牌风险，AI无法判断的边缘情况 |
+| Define theme materials/selling points | Requires product knowledge and strategy | 定义主题素材/卖点 | 需要产品知识和策略 |
+| Set business rules (which day, which channel) | Strategic decisions | 设定业务规则（哪天、哪个渠道） | 战略决策 |
+| Curate image scene pool | Aesthetic and brand judgment | 策划图片场景池 | 美学和品牌判断 |
+| Handle validation edge cases | When AI validator is uncertain | 处理验证边缘情况 | 当AI验证器不确定时 |
 
-```bash
-ZHIPUAI_API_KEY=...     # ZhipuAI API key for text generation
-MODAI_API_KEY=...       # ModAI API key for image generation
-COOKIE=...              # Session cookie for internal services
-WEBHOOK_URL=...         # WeChat Work bot webhook
-SHIMO_SHEET_GUID=...    # Cloud spreadsheet document ID
-SHIMO_USER_ID=...       # Spreadsheet user ID
-SECRET_KEY=...          # Flask secret key
-PORT=5006               # Server port
-```
+### 4.5 Boundary Design Heuristic / 边界设计启发式
 
-### Data Files / 数据文件
+Ask three questions to decide if a step should be AI, code, or human:
 
-| File | Purpose |
-|------|---------|
-| `data/链接.xlsx` | All promotional links (2 sheets: mini-course, member) |
-| `data/推送进度.json` | Theme/category rotation position |
-| `data/小课包文案历史.json` | Title/selling-point dedup history |
-| `data/会员知识点历史.json` | Knowledge-point dedup history |
+问三个问题来决定某步骤应该是AI、代码还是人工：
+
+1. **Is there exactly one correct answer?** → Code
+2. **Are there multiple acceptable answers and the task is repeatable?** → AI
+3. **Does a wrong answer carry significant business/brand risk?** → Human review gate
+
+1. **是否只有一个正确答案？** → 代码
+2. **是否有多个可接受答案且任务可重复？** → AI
+3. **错误答案是否带来重大业务/品牌风险？** → 人工审核关卡
 
 ---
 
-## Common Operations / 常用操作
+## 5. Design Patterns Summary / 设计模式总结
 
-### Weekly Routine / 每周例行
+| Pattern | Implementation | Benefit |
+|---------|---------------|---------|
+| Generator-Critic | Separate generation and validation calls | Higher creativity AND accuracy |
+| Temperature Stratification | Different temp per pipeline stage | Each stage optimized for its goal |
+| Priority Anchoring | 【最高优先级】markers in image prompts | Critical elements rendered correctly |
+| Scene Pool | Pre-curated scenes, random selection | Controlled variety without quality loss |
+| Structured Output | JSON for validation, markers for parsing | Reliable pipeline integration |
+| Fallback Safety | Regex-validate after format adjustment | Never lose critical data |
+| Code-Based Dedup | difflib at 50% threshold | Fast, deterministic, auditable |
+| Reference-Based Image Gen | Base image + modification prompt | Low variance, high consistency |
 
-```bash
-# 1. Generate content for next week (Mon-Sun)
-python scripts/generate/generate_all.py --start 0707 --days 7
-
-# 2. Generate images (if new themes or dates needed)
-cd image-generation/小课包群发图 && node batch.js -t 故宫 -n 5
-cd image-generation/会员素材 && node generate.js -t qunfa -s 0707 -d 7
-
-# 3. Deploy all tasks
-node emon/api/配置推送.js 0707 0713 --generate
-```
-
-### One-Command Full Pipeline / 一键全流程
-
-```bash
-node emon/api/配置推送.js 0707 0713 --generate
-```
-
-This single command will:
-1. Generate all content (calls Python internally)
-2. Write to spreadsheet
-3. Update material library
-4. Create all broadcast/moments/DM tasks
-5. Send webhook notification
-
-### Emergency Operations / 紧急操作
-
-```bash
-# Stop a running task
-node emon/停止任务.js "任务名关键词"
-
-# Check account status
-node emon/账号离线检查.js
-
-# Update material library only
-node emon/素材库更新-api.js --qunfa 0707
-```
+| 模式 | 实现方式 | 收益 |
+|------|----------|------|
+| 生成器-评论家 | 分离生成和验证调用 | 更高创意性且更高准确性 |
+| 温度分层 | 每流水线阶段不同温度 | 每阶段针对目标优化 |
+| 优先级锚定 | 图片提示词中的【最高优先级】标记 | 关键元素正确渲染 |
+| 场景池 | 预策划场景，随机选择 | 受控多样性不损失质量 |
+| 结构化输出 | 验证用JSON，解析用标记 | 可靠的流水线集成 |
+| 回退安全 | 格式调整后正则验证 | 永不丢失关键数据 |
+| 基于代码去重 | difflib 50%阈值 | 快速、确定性、可审计 |
+| 基于参考的图片生成 | 基础图 + 修改提示词 | 低方差、高一致性 |
 
 ---
 
-## Tech Stack / 技术栈
+## 6. Anti-Patterns to Avoid / 应避免的反模式
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Text AI | ZhipuAI (glm-4-flash/plus) | Copywriting & fact-checking |
-| Image AI | ModAI (doubao-seedream-4.5) | Image-to-image generation |
-| Backend | Python (Flask + SocketIO) | Web panel & content gen |
-| Automation | Node.js | RPA API calls & image gen |
-| Data | Excel (openpyxl), Shimo API | Config & content storage |
-| Messaging | Emon RPA Platform | Task execution |
-| Notification | WeChat Work Webhook | Deployment alerts |
+1. **Single monolithic prompt** — Don't ask one prompt to generate, validate, format, and schedule. Each concern needs its own call with its own temperature.
+
+   **单一巨型提示词** — 不要让一个提示词同时生成、验证、格式化和调度。每个关注点需要独立调用和独立温度。
+
+2. **AI for deterministic logic** — Don't use AI to calculate "next Tuesday" or "theme index 7 of 14." Code is 100% reliable for this; AI is not.
+
+   **用AI做确定性逻辑** — 不要用AI计算"下周二"或"14个主题中第7个"。代码对此100%可靠；AI不是。
+
+3. **Unstructured AI output** — If downstream code needs to parse AI output, you MUST specify the exact format. "Write a nice response" is unparseable; "Output JSON with keys 'pass' and 'reason'" is parseable.
+
+   **非结构化AI输出** — 如果下游代码需要解析AI输出，你必须指定精确格式。"写一个好的回复"不可解析；"输出包含'pass'和'reason'键的JSON"可解析。
+
+4. **AI without validation** — Never deploy AI-generated content directly. Always have a validation gate (automated or human) between generation and publication.
+
+   **无验证的AI** — 永远不要直接部署AI生成的内容。在生成和发布之间必须有验证关卡（自动或人工）。
+
+5. **Unlimited creative freedom in images** — Unconstrained image generation produces inconsistent brand aesthetics. Use scene pools, reference images, and priority markers to bound the creative space.
+
+   **图片生成的无限创意自由** — 无约束的图片生成产出不一致的品牌美学。用场景池、参考图和优先级标记限定创意空间。
 
 ---
 
-## Constraints & Rules / 约束与规则
+*This methodology is derived from production implementation patterns in automated content distribution systems.*
 
-1. **DM Schedule**: Mini-course DM = Saturday only; Member DM = Tuesday only
-2. **Theme Cycle**: 14 themes rotate in fixed order, tracked in progress file
-3. **Deduplication**: AI content is checked against full history before acceptance
-4. **Fact Checking**: All knowledge claims verified by secondary LLM call
-5. **Material Order**: Material library MUST be updated BEFORE creating tasks
-6. **Moments Independence**: Moments tasks upload directly, never touch material library
-7. **Date Format**: Spreadsheet dates written as `MM-DD` strings (not integers, not YYYY-MM-DD)
-8. **Image Naming**: Strict conventions per folder (see Material Library table)
-9. **No Stopping Moments Tasks**: Once configured, moments tasks should not be stopped
-10. **Creator Filter**: When searching tasks, always filter by creator to avoid conflicts
+*本方法论源自自动化内容分发系统的生产实施模式。*

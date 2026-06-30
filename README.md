@@ -1,45 +1,55 @@
-# Private Domain Skill / 私域运营技能
+# Private Domain AI Skill / 私域 AI 技能
 
-A Claude Code skill for automating private domain content generation, image creation, and multi-channel deployment.
+A methodology guide for building AI-powered content generation and distribution workflows.
 
-这是一个 Claude Code 技能，用于自动化私域内容生成、图片制作和多渠道推送配置。
+一份关于构建 AI 驱动内容生成与分发工作流的方法论指南。
 
-## What This Skill Does / 技能说明
+## What This Document Covers / 文档内容
 
-This skill encapsulates the complete workflow for:
-- AI-powered promotional copywriting generation (text)
-- AI-powered promotional image generation (visual)
-- One-click deployment to messaging platforms (broadcast, moments, DM)
+This is **not** an operational runbook. It is a methodology document covering:
 
-本技能封装了完整的私域推送工作流：
-- AI 文案生成（文字内容）
-- AI 图片生成（视觉素材）
-- 一键配置推送任务（群发、朋友圈、私信）
+这**不是**操作手册。它是一份方法论文档，涵盖：
 
-## Usage / 使用方式
+- **Prompt Engineering Patterns** — How to structure prompts for reliable, high-quality output  
+  **提示词工程模式** — 如何构造提示词以获得可靠、高质量的输出
+
+- **Workflow Architecture** — Why each stage exists and how they connect  
+  **工作流架构** — 每个阶段为什么存在、如何连接
+
+- **Component Roles** — What each piece of the system is responsible for  
+  **组件角色** — 系统每个部分负责什么
+
+- **AI Boundary Definition** — What AI should do vs. what code/humans must handle  
+  **AI 边界定义** — AI 应该做什么 vs 代码/人工必须处理什么
+
+## Read the Skill / 阅读技能文档
+
+See [SKILL.md](./SKILL.md) for the full methodology guide (bilingual EN/CN).
+
+详见 [SKILL.md](./SKILL.md) 获取完整方法论指南（中英双语）。
+
+## Architecture Overview / 架构概览
 
 ```
-/private-domain
+[Generation (AI)] → [Validation (AI)] → [Dedup (Code)] → [Format (AI)] → [Deploy (Code)]
+     ↑                    ↑                                    ↑
+  High temp (0.8-0.9)  Low temp (0.1)                    Med temp (0.3)
 ```
 
-See [SKILL.md](./SKILL.md) for the full skill specification.
+## Key Principles / 核心原则
 
-详见 [SKILL.md](./SKILL.md) 获取完整技能规范。
+1. **AI handles divergent tasks; Code handles convergent tasks**  
+   AI 处理发散性任务；代码处理收敛性任务
 
-## Architecture / 架构
+2. **Never deploy AI output without validation**  
+   永远不要未经验证就部署 AI 输出
 
-```
-Content Generation (Python/ZhipuAI)
-        ↓
-Image Generation (Node.js/ModAI)
-        ↓
-Spreadsheet Write (Shimo API)
-        ↓
-Task Deployment (Emon RPA API)
-        ↓
-Notification (WeChat Webhook)
-```
+3. **Each pipeline stage gets its own temperature**  
+   每个流水线阶段有独立的温度设置
 
-## Related Repository / 相关仓库
+4. **Structured output enables reliable automation**  
+   结构化输出支撑可靠的自动化
 
-- [Private-Domain-Operations](https://github.com/1024205457-boop/Private-Domain-Operations) — The implementation code
+## Related / 相关链接
+
+- [Private-Domain-Operations](https://github.com/1024205457-boop/Private-Domain-Operations) — The implementation code / 实现代码
